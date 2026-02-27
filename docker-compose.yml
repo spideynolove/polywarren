@@ -1,0 +1,161 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: polywarren
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: /polywarren/postgres
+        awslogs-region: us-east-1
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: /polywarren/redis
+        awslogs-region: us-east-1
+
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      DB_URL: postgres://postgres:postgres@postgres:5432/polywarren
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: /polywarren/api
+        awslogs-region: us-east-1
+
+  signal_engine:
+    build:
+      context: .
+      dockerfile: signal_engine/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DB_URL: postgres://postgres:postgres@postgres:5432/polywarren
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: /polywarren/signal
+        awslogs-region: us-east-1
+
+  execution:
+    build:
+      context: .
+      dockerfile: execution/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "50051:50051"
+    env_file: .env
+    environment:
+      DB_URL: postgres://postgres:postgres@postgres:5432/polywarren
+      DRY_RUN: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: /polywarren/execution
+        awslogs-region: us-east-1
+
+  bot:
+    build:
+      context: .
+      dockerfile: bot/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      EXECUTION_GRPC_ADDR: execution:50051
+      API_BASE_URL: http://api:8000
+    depends_on:
+      - execution
+      - api
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: /polywarren/bot
+        awslogs-region: us-east-1
+
+  onchain:
+    build:
+      context: .
+      dockerfile: onchain/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DB_URL: postgres://postgres:postgres@postgres:5432/polywarren
+    depends_on:
+      postgres:
+        condition: service_healthy
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: /polywarren/onchain
+        awslogs-region: us-east-1
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ""
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: ""
+    depends_on:
+      - api
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: /polywarren/frontend
+        awslogs-region: us-east-1
+
+volumes:
+  postgres_data:
+  redis_data:

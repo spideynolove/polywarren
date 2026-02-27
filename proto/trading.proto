@@ -1,0 +1,83 @@
+syntax = "proto3";
+
+package trading;
+
+option py_generic_services = true;
+
+enum Venue {
+  VENUE_UNSPECIFIED = 0;
+  POLYMARKET = 1;
+  KALSHI = 2;
+}
+
+enum Side {
+  SIDE_UNSPECIFIED = 0;
+  YES = 1;
+  NO = 2;
+}
+
+enum OrderStatus {
+  STATUS_UNSPECIFIED = 0;
+  DRY_RUN = 1;
+  PENDING = 2;
+  FILLED = 3;
+  REJECTED = 4;
+  HALTED = 5;
+}
+
+message OrderRequest {
+  string signal_id = 1;
+  string market_id = 2;
+  Venue venue = 3;
+  Side side = 4;
+  double size = 5;
+  double limit_price = 6;
+  bool dry_run = 7;
+  int64 signal_received_at = 8;
+}
+
+message OrderResponse {
+  string order_id = 1;
+  OrderStatus status = 2;
+  string message = 3;
+  int64 order_sent_at = 4;
+  int64 confirmation_at = 5;
+  int64 latency_ms = 6;
+}
+
+message PositionQuery {
+  string market_id = 1;
+  Venue venue = 2;
+}
+
+message PositionResponse {
+  string market_id = 1;
+  Venue venue = 2;
+  Side side = 3;
+  double size = 4;
+  double entry_price = 5;
+  double current_pnl = 6;
+}
+
+message PnLRequest {
+  Venue venue = 1;
+}
+
+message PnLResponse {
+  double total_pnl = 1;
+  repeated PositionResponse positions = 2;
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+  bool ok = 1;
+  string message = 2;
+}
+
+service ExecutionService {
+  rpc PlaceOrder(OrderRequest) returns (OrderResponse);
+  rpc GetPosition(PositionQuery) returns (PositionResponse);
+  rpc GetPnL(PnLRequest) returns (PnLResponse);
+  rpc Health(HealthRequest) returns (HealthResponse);
+}

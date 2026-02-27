@@ -1,0 +1,5 @@
+aiogram==3.7.0
+grpcio==1.64.1
+grpcio-tools==1.64.1
+structlog==24.1.0
+python-dotenv==1.0.1

@@ -1,0 +1,7 @@
+aiohttp==3.9.5
+redis[asyncio]==5.0.7
+tortoise-orm[asyncpg]==0.21.3
+aerich==0.7.2
+structlog==24.1.0
+pydantic==2.7.1
+python-dotenv==1.0.1

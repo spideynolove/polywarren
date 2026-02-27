@@ -1,0 +1,88 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Test & Lint
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: polywarren_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Python dependencies
+        run: |
+          pip install -r api/requirements.txt \
+                      -r signal/requirements.txt \
+                      -r execution/requirements.txt \
+                      -r onchain/requirements.txt \
+                      -r bot/requirements.txt \
+                      pytest pytest-asyncio ruff mypy
+
+      - name: Ruff lint
+        run: ruff check .
+
+      - name: Mypy type check
+        run: mypy shared/ api/ signal/ execution/ onchain/ bot/ --ignore-missing-imports
+
+      - name: Run tests
+        env:
+          DB_URL: postgres://postgres:postgres@localhost:5432/polywarren_test
+          REDIS_URL: redis://localhost:6379/0
+          DRY_RUN: "true"
+        run: pytest tests/ -v --tb=short
+
+  deploy:
+    name: Deploy to EC2
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+            cd ~/polywarren
+            git pull origin main
+            docker compose pull postgres redis || true
+            docker compose up -d --build --remove-orphans
+            docker compose exec -T api curl -sf http://localhost:8000/healthz
+            echo "Deploy successful"
