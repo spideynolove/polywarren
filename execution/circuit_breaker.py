@@ -1,3 +1,4 @@
+import asyncio
 import time
 import structlog
 from collections import deque
@@ -17,18 +18,27 @@ class CircuitBreaker:
             "polymarket": MAX_ORDERS_PER_MINUTE_POLYMARKET,
             "kalshi": MAX_ORDERS_PER_MINUTE_KALSHI,
         }
+        self._locks: dict[str, asyncio.Lock] = {
+            "polymarket": asyncio.Lock(),
+            "kalshi": asyncio.Lock(),
+        }
 
-    def check_rate_limit(self, venue: str) -> bool:
-        now = time.monotonic()
-        window = self._order_timestamps.get(venue, deque())
-        while window and now - window[0] > 60:
-            window.popleft()
-        limit = self._rate_limits.get(venue, 10)
-        if len(window) >= limit:
-            log.warning("rate_limit_exceeded", venue=venue, count=len(window), limit=limit)
-            return False
-        window.append(now)
-        return True
+    async def check_rate_limit(self, venue: str) -> bool:
+        if venue not in self._order_timestamps:
+            self._order_timestamps[venue] = deque()
+            self._locks[venue] = asyncio.Lock()
+
+        async with self._locks[venue]:
+            now = time.monotonic()
+            window = self._order_timestamps[venue]
+            while window and now - window[0] > 60:
+                window.popleft()
+            limit = self._rate_limits.get(venue, 10)
+            if len(window) >= limit:
+                log.warning("rate_limit_exceeded", venue=venue, count=len(window), limit=limit)
+                return False
+            window.append(now)
+            return True
 
     def check_loss_threshold(self, current_pnl: float) -> bool:
         if current_pnl <= MAX_LOSS_THRESHOLD:

@@ -24,7 +24,8 @@ CTF_ABI = [
 
 async def handle_resolution(condition_id: str, question_id: str) -> None:
     cid = condition_id.hex() if isinstance(condition_id, bytes) else condition_id
-    log.info("condition_resolved", condition_id=cid, question_id=str(question_id))
+    qid = question_id.hex() if isinstance(question_id, bytes) else question_id
+    log.info("condition_resolved", condition_id=cid, question_id=qid)
 
     market = await Market.get_or_none(symbol=cid)
     if market:

@@ -1,11 +1,9 @@
 from fastapi import APIRouter, Request
-from slowapi import Limiter
-from slowapi.util import get_remote_address
+from api.limiter import limiter
 from shared.models import PnLSnapshot
 from shared.schemas import PnLSnapshotOut
 
 router = APIRouter()
-limiter = Limiter(key_func=get_remote_address)
 
 
 @router.get("/pnl", response_model=list[PnLSnapshotOut])

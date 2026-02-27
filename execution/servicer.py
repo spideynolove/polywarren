@@ -47,7 +47,7 @@ class ExecutionServicer:
                 latency_ms=0,
             )
 
-        if not circuit_breaker.check_rate_limit(venue):
+        if not await circuit_breaker.check_rate_limit(venue):
             return trading_pb2.OrderResponse(
                 order_id=str(uuid.uuid4()),
                 status=STATUS_REJECTED,

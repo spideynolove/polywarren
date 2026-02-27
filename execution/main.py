@@ -3,7 +3,7 @@ import structlog
 import grpc
 from concurrent import futures
 from execution.servicer import ExecutionServicer
-from execution.config import GRPC_PORT
+from execution.config import GRPC_PORT, DRY_RUN
 from shared.db import init_db, close_db
 
 structlog.configure(
@@ -32,7 +32,7 @@ async def serve() -> None:
     addr = f"[::]:{GRPC_PORT}"
     server.add_insecure_port(addr)
     await server.start()
-    log.info("execution_engine_started", address=addr, dry_run=True)
+    log.info("execution_engine_started", address=addr, dry_run=DRY_RUN)
     try:
         await server.wait_for_termination()
     finally:

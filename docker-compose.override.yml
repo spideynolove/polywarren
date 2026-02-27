@@ -1,0 +1,49 @@
+services:
+  postgres:
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+  redis:
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+  api:
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+  signal_engine:
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+  execution:
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+  bot:
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+  onchain:
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+  frontend:
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

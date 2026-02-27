@@ -2,10 +2,11 @@ import structlog
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from shared.db import init_db, close_db
+from api.config import CORS_ORIGINS
+from api.limiter import limiter
 from api.middleware import RequestContextMiddleware
 from api.routes import markets, positions, pnl, stream, health
 
@@ -16,9 +17,6 @@ structlog.configure(
         structlog.processors.JSONRenderer(),
     ]
 )
-
-limiter = Limiter(key_func=get_remote_address)
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -34,7 +32,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(RequestContextMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ORIGINS,
     allow_methods=["GET"],
     allow_headers=["*"],
 )

@@ -44,7 +44,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           pip install -r api/requirements.txt \
-                      -r signal/requirements.txt \
+                      -r signal_engine/requirements.txt \
                       -r execution/requirements.txt \
                       -r onchain/requirements.txt \
                       -r bot/requirements.txt \
@@ -54,7 +54,7 @@ jobs:
         run: ruff check .
 
       - name: Mypy type check
-        run: mypy shared/ api/ signal/ execution/ onchain/ bot/ --ignore-missing-imports
+        run: mypy shared/ api/ signal_engine/ execution/ onchain/ bot/ --ignore-missing-imports
 
       - name: Run tests
         env:

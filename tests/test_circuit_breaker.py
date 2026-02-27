@@ -1,23 +1,45 @@
+import pytest
 from execution.circuit_breaker import CircuitBreaker
 
 
-def test_rate_limit_allows_within_limit():
+@pytest.mark.anyio
+async def test_rate_limit_allows_within_limit():
     cb = CircuitBreaker()
     for _ in range(10):
-        assert cb.check_rate_limit("polymarket") is True
+        assert await cb.check_rate_limit("polymarket") is True
 
 
-def test_rate_limit_blocks_over_limit():
+@pytest.mark.anyio
+async def test_rate_limit_blocks_over_limit():
     cb = CircuitBreaker()
     for _ in range(10):
-        cb.check_rate_limit("polymarket")
-    assert cb.check_rate_limit("polymarket") is False
+        await cb.check_rate_limit("polymarket")
+    assert await cb.check_rate_limit("polymarket") is False
 
 
-def test_loss_threshold_halts():
+@pytest.mark.anyio
+async def test_rate_limit_unknown_venue_tracks():
+    cb = CircuitBreaker()
+    for _ in range(10):
+        await cb.check_rate_limit("unknown_venue")
+    assert await cb.check_rate_limit("unknown_venue") is False
+
+
+def test_loss_threshold_allows_above_threshold():
     cb = CircuitBreaker()
     assert cb.check_loss_threshold(-50.0) is True
-    assert cb.check_loss_threshold(-101.0) is False
+    assert cb.halted is False
+
+
+def test_loss_threshold_halts_at_threshold():
+    cb = CircuitBreaker()
+    assert cb.check_loss_threshold(-100.0) is False
+    assert cb.halted is True
+
+
+def test_loss_threshold_halts_below_threshold():
+    cb = CircuitBreaker()
+    assert cb.check_loss_threshold(-200.0) is False
     assert cb.halted is True
 
 

@@ -4,13 +4,14 @@ from tortoise.models import Model
 
 class Market(Model):
     id = fields.UUIDField(pk=True)
-    symbol = fields.CharField(max_length=255, unique=True)
+    symbol = fields.CharField(max_length=255)
     venue = fields.CharField(max_length=50)
     last_odds = fields.FloatField(null=True)
     updated_at = fields.DatetimeField(auto_now=True)
 
     class Meta:
         table = "markets"
+        unique_together = [("symbol", "venue")]
         indexes = [("updated_at", "symbol")]
 
 

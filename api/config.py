@@ -7,3 +7,8 @@ DB_URL = os.getenv("DB_URL", "postgres://postgres:postgres@postgres:5432/polywar
 REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379/0")
 POLYMARKET_API_URL = os.getenv("POLYMARKET_API_URL", "https://clob.polymarket.com")
 KALSHI_API_URL = os.getenv("KALSHI_API_URL", "https://trading-api.kalshi.com")
+CORS_ORIGINS: list[str] = [
+    o.strip()
+    for o in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+    if o.strip()
+]

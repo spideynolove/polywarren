@@ -7,13 +7,22 @@ import redis.asyncio as aioredis
 from api.config import REDIS_URL
 
 router = APIRouter()
+_SCAN_COUNT = 100
 
 
 async def tick_generator(redis_url: str) -> AsyncGenerator[str, None]:
     r = aioredis.from_url(redis_url, decode_responses=True)
     try:
         while True:
-            keys = await r.keys("market:*")
+            keys: list[str] = []
+            cursor = 0
+            while True:
+                cursor, batch = await r.scan(cursor, match="market:*", count=_SCAN_COUNT)
+                keys.extend(batch)
+                if cursor == 0:
+                    break
+                if len(keys) >= 50:
+                    break
             if keys:
                 pipe = r.pipeline()
                 for key in keys[:50]:
