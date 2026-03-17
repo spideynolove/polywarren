@@ -16,6 +16,7 @@ def normalize_polymarket(raw: dict[str, Any]) -> Tick | None:
                 float(raw.get("timestamp", 0)) / 1e9, tz=timezone.utc
             ) if raw.get("timestamp") else datetime.now(tz=timezone.utc),
             volume=float(raw.get("size", 0)) if raw.get("size") else None,
+            condition_id=raw.get("condition_id"),
         )
     except (KeyError, ValueError, TypeError):
         return None

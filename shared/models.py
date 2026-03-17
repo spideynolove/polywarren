@@ -6,6 +6,7 @@ class Market(Model):
     id = fields.UUIDField(pk=True)
     symbol = fields.CharField(max_length=255)
     venue = fields.CharField(max_length=50)
+    condition_id = fields.CharField(max_length=255, null=True)
     last_odds = fields.FloatField(null=True)
     updated_at = fields.DatetimeField(auto_now=True)
 

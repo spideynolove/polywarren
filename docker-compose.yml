@@ -71,11 +71,14 @@ services:
     environment:
       DB_URL: postgres://postgres:postgres@postgres:5432/polywarren
       REDIS_URL: redis://redis:6379/0
+      EXECUTION_GRPC_ADDR: execution:50051
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+      execution:
+        condition: service_started
     logging:
       driver: awslogs
       options:
@@ -128,9 +131,12 @@ services:
     env_file: .env
     environment:
       DB_URL: postgres://postgres:postgres@postgres:5432/polywarren
+      EXECUTION_GRPC_ADDR: execution:50051
     depends_on:
       postgres:
         condition: service_healthy
+      execution:
+        condition: service_started
     logging:
       driver: awslogs
       options:

@@ -1,6 +1,6 @@
 import grpc
 import structlog
-from bot.config import EXECUTION_GRPC_ADDR
+from bot.config import EXECUTION_GRPC_ADDR, DRY_RUN
 
 log = structlog.get_logger()
 
@@ -25,7 +25,7 @@ async def place_order(market_id: str, side: str, size: float) -> dict:
         market_id=market_id,
         side=side_val,
         size=size,
-        dry_run=True,
+        dry_run=DRY_RUN,
     ))
     return {
         "order_id": resp.order_id,

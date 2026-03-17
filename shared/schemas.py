@@ -10,6 +10,7 @@ class Tick(BaseModel):
     no_price: float
     timestamp: datetime
     volume: Optional[float] = None
+    condition_id: Optional[str] = None
 
 
 class SignalEvent(BaseModel):

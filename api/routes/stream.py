@@ -4,14 +4,27 @@ from typing import AsyncGenerator
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 import redis.asyncio as aioredis
-from api.config import REDIS_URL
 
 router = APIRouter()
 _SCAN_COUNT = 100
 
+_pool: aioredis.ConnectionPool | None = None
 
-async def tick_generator(redis_url: str) -> AsyncGenerator[str, None]:
-    r = aioredis.from_url(redis_url, decode_responses=True)
+
+def init_redis_pool(redis_url: str) -> None:
+    global _pool
+    _pool = aioredis.ConnectionPool.from_url(redis_url, decode_responses=True)
+
+
+async def close_redis_pool() -> None:
+    global _pool
+    if _pool:
+        await _pool.aclose()
+        _pool = None
+
+
+async def tick_generator() -> AsyncGenerator[str, None]:
+    r = aioredis.Redis(connection_pool=_pool)
     try:
         while True:
             keys: list[str] = []
@@ -38,7 +51,7 @@ async def tick_generator(redis_url: str) -> AsyncGenerator[str, None]:
 @router.get("/stream/ticks")
 async def stream_ticks(request: Request) -> StreamingResponse:
     return StreamingResponse(
-        tick_generator(REDIS_URL),
+        tick_generator(),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

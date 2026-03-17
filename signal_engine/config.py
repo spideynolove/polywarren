@@ -10,3 +10,5 @@ KALSHI_WS_URL = os.getenv("KALSHI_WS_URL", "wss://trading-api.kalshi.com/trade-a
 KALSHI_API_KEY = os.getenv("KALSHI_KEY", "")
 VOLATILITY_THRESHOLD = float(os.getenv("VOLATILITY_THRESHOLD", "0.05"))
 REDIS_MARKET_TTL = int(os.getenv("REDIS_MARKET_TTL", "60"))
+EXECUTION_GRPC_ADDR = os.getenv("EXECUTION_GRPC_ADDR", "execution:50051")
+DRY_RUN = os.getenv("DRY_RUN", "true").lower() == "true"

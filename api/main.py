@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from shared.db import init_db, close_db
-from api.config import CORS_ORIGINS
+from api.config import CORS_ORIGINS, REDIS_URL
 from api.limiter import limiter
 from api.middleware import RequestContextMiddleware
 from api.routes import markets, positions, pnl, stream, health
@@ -21,7 +21,9 @@ structlog.configure(
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
+    stream.init_redis_pool(REDIS_URL)
     yield
+    await stream.close_redis_pool()
     await close_db()
 
 

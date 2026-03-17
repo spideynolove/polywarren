@@ -35,7 +35,7 @@ async def _check_exchange(name: str, url: str) -> str:
     try:
         async with httpx.AsyncClient(timeout=3.0) as client:
             resp = await client.get(url)
-            return "ok" if resp.status_code < 500 else "error"
+            return "ok" if resp.status_code < 400 else "error"
     except Exception as exc:
         log.error("healthz_exchange_fail", exchange=name, error=str(exc))
         return "error"

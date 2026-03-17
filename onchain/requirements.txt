@@ -2,3 +2,5 @@ web3==6.19.0
 tortoise-orm[asyncpg]==0.21.3
 structlog==24.1.0
 python-dotenv==1.0.1
+grpcio==1.64.1
+grpcio-tools==1.64.1
